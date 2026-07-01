@@ -3,105 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mine Hills Pool Villa V3</title>
+  <title>Mine Hills Pool Villa | ตารางบ้านว่าง</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="topbar">
+  <header class="hero">
     <div>
-      <h1>🏔️ Mine Hills <span>Pool Villa</span></h1>
-      <p>ระบบจองออนไลน์ V3 — เชื่อม Firebase Cloud</p>
+      <div class="brand"><span>🏔️</span> Mine Hills <b>Pool Villa</b></div>
+      <p>ตารางบ้านว่าง / ไม่ว่าง สำหรับลูกค้าเลือกวันเข้าพัก</p>
     </div>
-    <nav>
-      <button class="tab active" data-page="dashboard">แดชบอร์ด</button>
-      <button class="tab" data-page="calendar">ปฏิทิน</button>
-      <button class="tab" data-page="bookings">ลูกค้า/รายรับ</button>
-      <button class="tab" data-page="admin">แอดมิน</button>
-    </nav>
+    <div class="top-actions">
+      <button class="pill active" data-page="customer">ดูวันว่าง</button>
+      <button class="pill" data-page="admin">แอดมิน</button>
+    </div>
   </header>
 
   <main class="wrap">
-    <section id="page-dashboard" class="page active">
-      <div class="status-line" id="syncStatus">กำลังเชื่อมต่อ Firebase...</div>
-      <div class="stats">
-        <article><b id="statAvailable">0</b><span>บ้านว่างวันนี้</span></article>
-        <article><b id="statBooked">0</b><span>จองแล้ววันนี้</span></article>
-        <article><b id="statLocked">0</b><span>ล็อกวันนี้</span></article>
-        <article><b id="statRevenue">0</b><span>รายรับเดือนนี้</span></article>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h2>ภาพรวมวันนี้</h2><button id="seedBtn">สร้างข้อมูลบ้าน 13 หลัง</button></div>
-        <div id="todayList" class="today-list"></div>
-      </div>
-    </section>
+    <section class="status-line" id="statusLine">กำลังเชื่อมต่อ Firebase...</section>
 
-    <section id="page-calendar" class="page">
-      <div class="booking-layout">
-        <aside class="room-list">
-          <h3>บ้านพักทั้งหมด</h3>
-          <div id="roomList"></div>
+    <section id="customerPage" class="page active">
+      <div class="toolbar card">
+        <div>
+          <h1>เลือกบ้านพักเพื่อดูปฏิทิน</h1>
+          <p>สีเขียว = ว่าง · สีแดง = ไม่ว่าง/จองแล้ว · สีเทา = ปิด/ล็อก</p>
+        </div>
+        <div class="month-control">
+          <button id="prevMonth">‹</button>
+          <strong id="monthLabel">-</strong>
+          <button id="nextMonth">›</button>
+        </div>
+      </div>
+
+      <div class="grid-layout">
+        <aside class="card room-panel">
+          <h2>บ้านพักทั้งหมด</h2>
+          <div id="roomList" class="room-list"></div>
         </aside>
-        <section class="calendar-panel">
-          <div class="cal-head">
-            <div>
-              <h2 id="selectedRoomName">บ้านพูลวิลล่า</h2>
-              <p id="selectedRoomType">วิลล่า</p>
-            </div>
-            <div class="month-nav">
-              <button id="prevMonth">‹</button>
-              <strong id="monthLabel"></strong>
-              <button id="nextMonth">›</button>
+
+        <section class="card calendar-panel">
+          <div class="calendar-title">
+            <h2 id="selectedRoomName">-</h2>
+            <div class="legend">
+              <span><i class="dot available"></i>ว่าง</span>
+              <span><i class="dot booked"></i>ไม่ว่าง</span>
+              <span><i class="dot locked"></i>ปิด</span>
             </div>
           </div>
-          <div class="tools">
-            <button class="mode active" data-mode="available">🟢 ว่าง</button>
-            <button class="mode" data-mode="booked">🔴 จองแล้ว</button>
-            <button class="mode" data-mode="locked">⚫ ล็อกไม่ว่าง</button>
-            <button class="mode" data-mode="clear">🔓 ปลดล็อก/ล้าง</button>
-          </div>
-          <div id="calendarGrid" class="calendar-grid"></div>
-          <p class="hint">เลือกโหมดด้านบน แล้วคลิกวันที่ในปฏิทิน ระบบจะบันทึกลง Firebase อัตโนมัติ</p>
+          <div id="calendar" class="calendar"></div>
+          <p class="note">* ตารางนี้ใช้สำหรับดูวันว่างเบื้องต้น กรุณาทักแชทเพื่อยืนยันการจองอีกครั้ง</p>
         </section>
       </div>
     </section>
 
-    <section id="page-bookings" class="page">
-      <div class="panel">
-        <div class="panel-head"><h2>เพิ่มการจอง / รายรับ</h2></div>
-        <form id="bookingForm" class="form-grid">
-          <label>บ้านพัก<select id="bookingRoom"></select></label>
-          <label>ชื่อลูกค้า<input id="customerName" required placeholder="ชื่อลูกค้า"></label>
-          <label>เบอร์โทร<input id="customerPhone" placeholder="เบอร์โทร"></label>
-          <label>LINE<input id="customerLine" placeholder="LINE ID"></label>
-          <label>วันเข้า<input id="checkIn" type="date" required></label>
-          <label>วันออก<input id="checkOut" type="date" required></label>
-          <label>จำนวนคน<input id="guestCount" type="number" min="1" value="2"></label>
-          <label>ยอดเต็ม<input id="totalPrice" type="number" min="0" value="0"></label>
-          <label>มัดจำ<input id="deposit" type="number" min="0" value="0"></label>
-          <label>สถานะชำระ<select id="paymentStatus"><option value="deposit">มัดจำแล้ว</option><option value="paid">จ่ายครบแล้ว</option><option value="pending">ยังไม่ชำระ</option></select></label>
-          <label class="wide">หมายเหตุ<input id="note" placeholder="หมายเหตุเพิ่มเติม"></label>
-          <button class="primary wide" type="submit">บันทึกการจอง</button>
-        </form>
+    <section id="adminPage" class="page">
+      <div class="admin-lock card" id="adminLock">
+        <h2>เข้าสู่หน้าแอดมิน</h2>
+        <p>ใส่รหัสเพื่อแก้สถานะวันว่าง / ไม่ว่าง</p>
+        <div class="login-row">
+          <input id="adminPass" type="password" placeholder="รหัสแอดมิน" />
+          <button id="loginBtn">เข้าแอดมิน</button>
+        </div>
+        <small>รหัสเริ่มต้น: 1111</small>
       </div>
-      <div class="panel">
-        <div class="panel-head"><h2>รายการจองล่าสุด</h2></div>
-        <div id="bookingList" class="booking-list"></div>
-      </div>
-    </section>
 
-    <section id="page-admin" class="page">
-      <div class="panel">
-        <h2>ตั้งค่าระบบ</h2>
-        <p>ตอนนี้ V3 เชื่อม Firebase แล้ว ข้อมูลการจองและสถานะวันจะซิงก์ทุกอุปกรณ์ที่เปิดลิงก์เดียวกัน</p>
-        <button id="clearMonthBtn" class="danger">ล้างสถานะเดือนนี้ของบ้านที่เลือก</button>
+      <div class="admin-board hidden" id="adminBoard">
+        <div class="toolbar card">
+          <div>
+            <h1>จัดการวันว่าง</h1>
+            <p>เลือกบ้าน → เลือกสถานะ → คลิกวันที่ต้องการ</p>
+          </div>
+          <div class="mode-group">
+            <button class="mode active" data-mode="available">🟢 ว่าง</button>
+            <button class="mode" data-mode="booked">🔴 ไม่ว่าง/จองแล้ว</button>
+            <button class="mode" data-mode="locked">⚫ ปิด/ล็อก</button>
+          </div>
+        </div>
+
+        <div class="grid-layout">
+          <aside class="card room-panel">
+            <h2>เลือกบ้านพัก</h2>
+            <div id="adminRoomList" class="room-list"></div>
+          </aside>
+
+          <section class="card calendar-panel">
+            <div class="calendar-title">
+              <h2 id="adminRoomName">-</h2>
+              <div class="month-control small">
+                <button id="adminPrevMonth">‹</button>
+                <strong id="adminMonthLabel">-</strong>
+                <button id="adminNextMonth">›</button>
+              </div>
+            </div>
+            <div id="adminCalendar" class="calendar"></div>
+          </section>
+        </div>
       </div>
     </section>
   </main>
 
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast">บันทึกแล้ว</div>
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
