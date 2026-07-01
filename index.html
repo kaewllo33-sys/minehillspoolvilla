@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -12,99 +12,55 @@
 <body>
   <header class="hero">
     <div>
-      <div class="brand"><span>🏔️</span> Mine Hills <b>Pool Villa</b></div>
-      <p>ตารางบ้านว่าง / ไม่ว่าง สำหรับลูกค้าเลือกวันเข้าพัก</p>
+      <p class="eyebrow">Mine Hills Pool Villa</p>
+      <h1>ตารางบ้านว่าง / ไม่ว่าง</h1>
+      <p class="sub">ลูกค้าสามารถเลือกบ้านและดูวันว่างได้เอง</p>
     </div>
-    <div class="top-actions">
-      <button class="pill active" data-page="customer">ดูวันว่าง</button>
-      <button class="pill" data-page="admin">แอดมิน</button>
-    </div>
+    <button id="adminBtn" class="admin-btn">แอดมิน</button>
   </header>
 
   <main class="wrap">
-    <section class="status-line" id="statusLine">กำลังเชื่อมต่อ Firebase...</section>
-
-    <section id="customerPage" class="page active">
-      <div class="toolbar card">
+    <section id="customerPanel" class="card">
+      <div class="toolbar">
         <div>
-          <h1>เลือกบ้านพักเพื่อดูปฏิทิน</h1>
-          <p>สีเขียว = ว่าง · สีแดง = ไม่ว่าง/จองแล้ว · สีเทา = ปิด/ล็อก</p>
+          <h2>เลือกบ้านพัก</h2>
+          <p>สีเขียว = ว่าง | สีแดง = จองแล้ว | สีเทา = ปิด/ล็อก</p>
         </div>
         <div class="month-control">
           <button id="prevMonth">‹</button>
-          <strong id="monthLabel">-</strong>
+          <strong id="monthLabel"></strong>
           <button id="nextMonth">›</button>
         </div>
       </div>
-
-      <div class="grid-layout">
-        <aside class="card room-panel">
-          <h2>บ้านพักทั้งหมด</h2>
-          <div id="roomList" class="room-list"></div>
-        </aside>
-
-        <section class="card calendar-panel">
-          <div class="calendar-title">
-            <h2 id="selectedRoomName">-</h2>
-            <div class="legend">
-              <span><i class="dot available"></i>ว่าง</span>
-              <span><i class="dot booked"></i>ไม่ว่าง</span>
-              <span><i class="dot locked"></i>ปิด</span>
-            </div>
-          </div>
-          <div id="calendar" class="calendar"></div>
-          <p class="note">* ตารางนี้ใช้สำหรับดูวันว่างเบื้องต้น กรุณาทักแชทเพื่อยืนยันการจองอีกครั้ง</p>
-        </section>
+      <div id="roomList" class="room-list"></div>
+      <div class="calendar-head">
+        <h3 id="activeRoomName"></h3>
+        <div class="legend">
+          <span><i class="dot free"></i>ว่าง</span>
+          <span><i class="dot booked"></i>จองแล้ว</span>
+          <span><i class="dot locked"></i>ปิด/ล็อก</span>
+        </div>
       </div>
+      <div id="calendar" class="calendar"></div>
     </section>
 
-    <section id="adminPage" class="page">
-      <div class="admin-lock card" id="adminLock">
-        <h2>เข้าสู่หน้าแอดมิน</h2>
-        <p>ใส่รหัสเพื่อแก้สถานะวันว่าง / ไม่ว่าง</p>
-        <div class="login-row">
-          <input id="adminPass" type="password" placeholder="รหัสแอดมิน" />
-          <button id="loginBtn">เข้าแอดมิน</button>
+    <section id="adminPanel" class="card admin-panel hidden">
+      <div class="toolbar">
+        <div>
+          <h2>จัดการวันว่าง</h2>
+          <p>เลือกสถานะ แล้วคลิกวันที่ต้องการ ข้อมูลจะบันทึกลง Firebase อัตโนมัติ</p>
         </div>
-        <small>รหัสเริ่มต้น: 1111</small>
+        <button id="backCustomer" class="ghost-btn">กลับหน้าลูกค้า</button>
       </div>
-
-      <div class="admin-board hidden" id="adminBoard">
-        <div class="toolbar card">
-          <div>
-            <h1>จัดการวันว่าง</h1>
-            <p>เลือกบ้าน → เลือกสถานะ → คลิกวันที่ต้องการ</p>
-          </div>
-          <div class="mode-group">
-            <button class="mode active" data-mode="available">🟢 ว่าง</button>
-            <button class="mode" data-mode="booked">🔴 ไม่ว่าง/จองแล้ว</button>
-            <button class="mode" data-mode="locked">⚫ ปิด/ล็อก</button>
-          </div>
-        </div>
-
-        <div class="grid-layout">
-          <aside class="card room-panel">
-            <h2>เลือกบ้านพัก</h2>
-            <div id="adminRoomList" class="room-list"></div>
-          </aside>
-
-          <section class="card calendar-panel">
-            <div class="calendar-title">
-              <h2 id="adminRoomName">-</h2>
-              <div class="month-control small">
-                <button id="adminPrevMonth">‹</button>
-                <strong id="adminMonthLabel">-</strong>
-                <button id="adminNextMonth">›</button>
-              </div>
-            </div>
-            <div id="adminCalendar" class="calendar"></div>
-          </section>
-        </div>
+      <div class="admin-tools">
+        <button class="mode active" data-mode="free">✅ ว่าง</button>
+        <button class="mode" data-mode="booked">🔴 จองแล้ว</button>
+        <button class="mode" data-mode="locked">🔒 ปิด/ล็อก</button>
+        <button id="clearMonth" class="mode danger">ปลดล็อกทั้งเดือน</button>
       </div>
+      <div class="admin-note" id="saveStatus">พร้อมใช้งาน</div>
     </section>
   </main>
-
-  <div id="toast" class="toast">บันทึกแล้ว</div>
 
   <script type="module" src="js/app.js"></script>
 </body>
