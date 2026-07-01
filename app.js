@@ -1,137 +1,107 @@
 import { db } from './firebase.js';
-import { collection, doc, getDocs, setDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
 const rooms = [
-  {id:'poolvilla', name:'บ้านพูลวิลล่า', type:'วิลล่า'},
-  {id:'jacuzzi', name:'Jacuzzi', type:'วิลล่า'},
-  {id:'cream1', name:'รถบ้านครีม 1', type:'รถบ้าน'},
-  {id:'cream2', name:'รถบ้านครีม 2', type:'รถบ้าน'},
-  {id:'viewhills1', name:'View Hills 1', type:'วิลล่า'},
-  {id:'viewhills2', name:'View Hills 2', type:'วิลล่า'},
-  {id:'whitehouse', name:'White House', type:'บ้านพัก'},
-  {id:'mujihouse', name:'Muji House', type:'บ้านพัก'},
-  {id:'mint1', name:'รถบ้านมิ้น 1', type:'รถบ้าน'},
-  {id:'mint2', name:'รถบ้านมิ้น 2', type:'รถบ้าน'},
-  {id:'gray3', name:'รถบ้านเทา 3', type:'รถบ้าน'},
-  {id:'gray4', name:'รถบ้านเทา 4', type:'รถบ้าน'},
-  {id:'cosy', name:'บ้านโคซี่', type:'บ้านพัก'}
+  'บ้านพูลวิลล่า','Jacuzzi','รถบ้านครีม 1','รถบ้านครีม 2','View Hills 1','View Hills 2','White House','Muji House','รถบ้านมิ้น 1','รถบ้านมิ้น 2','รถบ้านเทา 3','รถบ้านเทา 4','บ้านโคซี่'
 ];
-
-const monthNames = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const dayNames = ['อา','จ','อ','พ','พฤ','ศ','ส'];
-let selectedRoom = rooms[0].id;
-let adminRoom = rooms[0].id;
+const statusText = { free:'ว่าง', booked:'จองแล้ว', locked:'ปิด' };
+
+let activeRoom = rooms[0];
 let current = new Date();
-let adminCurrent = new Date();
-let statuses = {}; // key roomId_yyyy-mm-dd : available/booked/locked
-let adminMode = 'available';
+let mode = 'free';
+let admin = false;
+let statuses = {};
+let unsub = null;
 
 const $ = (id)=>document.getElementById(id);
-const dateKey = (y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-const statusThai = {available:'ว่าง', booked:'ไม่ว่าง', locked:'ปิด'};
+const monthKey = ()=> `${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}`;
+const dateKey = (d)=> `${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const safeRoomId = (name)=> name.replaceAll(' ','_').replaceAll('/','_');
+const docId = (date)=> `${safeRoomId(activeRoom)}_${date}`;
 
-function toast(text='บันทึกแล้ว'){
-  $('toast').textContent=text; $('toast').classList.add('show');
-  setTimeout(()=>$('toast').classList.remove('show'),1800);
+function renderRooms(){
+  $('roomList').innerHTML = rooms.map(r=>`<button class="room-card ${r===activeRoom?'active':''}" data-room="${r}">${r}</button>`).join('');
+  document.querySelectorAll('.room-card').forEach(btn=>btn.onclick=()=>{activeRoom=btn.dataset.room; listenMonth(); renderRooms();});
 }
 
-async function seedRooms(){
-  const snap = await getDocs(collection(db,'rooms'));
-  if(!snap.empty) return;
-  await Promise.all(rooms.map(r=>setDoc(doc(db,'rooms',r.id), r)));
-}
-
-function listenStatuses(){
-  onSnapshot(query(collection(db,'availability')), (snap)=>{
-    statuses = {};
-    snap.forEach(d=>{ statuses[d.id] = d.data().status || 'available'; });
-    $('statusLine').textContent = 'เชื่อม Firebase สำเร็จ — ตารางออนไลน์แล้ว';
-    renderAll();
-  }, (err)=>{
-    console.error(err);
-    $('statusLine').textContent = 'เชื่อม Firebase ไม่สำเร็จ กรุณาเช็ก Rules / Internet';
-  });
-}
-
-function getStatus(roomId,key){ return statuses[`${roomId}_${key}`] || 'available'; }
-async function setStatus(roomId,key,status){
-  await setDoc(doc(db,'availability',`${roomId}_${key}`), {roomId,date:key,status,updatedAt:new Date().toISOString()});
-}
-
-function renderRoomLists(){
-  $('roomList').innerHTML = rooms.map(r=>`<button class="room-btn ${r.id===selectedRoom?'active':''}" data-room="${r.id}"><b>${r.name}</b><span>${r.type}</span></button>`).join('');
-  $('adminRoomList').innerHTML = rooms.map(r=>`<button class="room-btn ${r.id===adminRoom?'active':''}" data-admin-room="${r.id}"><b>${r.name}</b><span>${r.type}</span></button>`).join('');
-  document.querySelectorAll('[data-room]').forEach(btn=>btn.onclick=()=>{selectedRoom=btn.dataset.room;renderAll();});
-  document.querySelectorAll('[data-admin-room]').forEach(btn=>btn.onclick=()=>{adminRoom=btn.dataset.adminRoom;renderAll();});
-}
-
-function renderMonthLabel(date, id){ $(id).textContent = `${monthNames[date.getMonth()]} ${date.getFullYear()+543}`; }
-function renderCalendar(targetId, roomId, date, isAdmin=false){
-  const y = date.getFullYear(), m = date.getMonth();
-  const firstDay = new Date(y,m,1).getDay();
-  const total = new Date(y,m+1,0).getDate();
+function renderCalendar(){
+  $('monthLabel').textContent = `${months[current.getMonth()]} ${current.getFullYear()+543}`;
+  $('activeRoomName').textContent = activeRoom;
+  const year = current.getFullYear(), month = current.getMonth();
+  const first = new Date(year,month,1).getDay();
+  const total = new Date(year,month+1,0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
   let html = dayNames.map(d=>`<div class="day-name">${d}</div>`).join('');
-  for(let i=0;i<firstDay;i++) html += `<div class="day empty"></div>`;
+  for(let i=0;i<first;i++) html += '<div class="day empty"></div>';
   for(let d=1; d<=total; d++){
-    const key = dateKey(y,m,d);
-    const st = getStatus(roomId,key);
-    html += `<div class="day ${st} ${isAdmin?'admin':''}" ${isAdmin?`data-day="${key}"`:''}><span class="num">${d}</span><span class="status">${statusThai[st]}</span></div>`;
+    const dt = new Date(year,month,d); dt.setHours(0,0,0,0);
+    const key = dateKey(d);
+    const st = statuses[key] || 'free';
+    html += `<div class="day ${st} ${dt<today?'past':''}" data-date="${key}"><div class="day-num">${d}</div><div class="status">${statusText[st]}</div></div>`;
   }
-  $(targetId).innerHTML = html;
-  if(isAdmin){
-    document.querySelectorAll('#adminCalendar .day.admin').forEach(el=>el.onclick=async()=>{
-      await setStatus(roomId, el.dataset.day, adminMode);
-      toast('บันทึกสถานะแล้ว');
+  $('calendar').innerHTML = html;
+  if(admin){
+    document.body.classList.add('admin-active');
+    document.querySelectorAll('.day[data-date]:not(.past)').forEach(el=>{
+      el.onclick = async()=>{
+        const date = el.dataset.date;
+        $('saveStatus').textContent = 'กำลังบันทึก...';
+        if(mode==='free') await deleteDoc(doc(db,'availability',docId(date)));
+        else await setDoc(doc(db,'availability',docId(date)),{room:activeRoom,date,status:mode,updatedAt:new Date().toISOString()});
+        $('saveStatus').textContent = 'บันทึกแล้ว';
+        setTimeout(()=>$('saveStatus').textContent='พร้อมใช้งาน',1200);
+      };
     });
+  } else {
+    document.body.classList.remove('admin-active');
   }
 }
 
-function updateDashboard(){
-  const today = new Date();
-  const key = dateKey(today.getFullYear(),today.getMonth(),today.getDate());
-  let avail=0, booked=0, locked=0;
-  rooms.forEach(r=>{ const st=getStatus(r.id,key); if(st==='booked') booked++; else if(st==='locked') locked++; else avail++; });
-  const cards = document.querySelectorAll('.status-card');
-}
-
-function renderAll(){
-  renderRoomLists();
-  const sr = rooms.find(r=>r.id===selectedRoom);
-  const ar = rooms.find(r=>r.id===adminRoom);
-  $('selectedRoomName').textContent = sr.name;
-  $('adminRoomName').textContent = ar.name;
-  renderMonthLabel(current,'monthLabel');
-  renderMonthLabel(adminCurrent,'adminMonthLabel');
-  renderCalendar('calendar', selectedRoom, current, false);
-  renderCalendar('adminCalendar', adminRoom, adminCurrent, true);
-}
-
-function bindUI(){
-  document.querySelectorAll('[data-page]').forEach(btn=>btn.onclick=()=>{
-    document.querySelectorAll('[data-page]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const page = btn.dataset.page;
-    $('customerPage').classList.toggle('active', page==='customer');
-    $('adminPage').classList.toggle('active', page==='admin');
+function listenMonth(){
+  if(unsub) unsub();
+  statuses = {};
+  const start = `${monthKey()}-01`;
+  const end = `${monthKey()}-31`;
+  const q = query(collection(db,'availability'), where('room','==',activeRoom), where('date','>=',start), where('date','<=',end));
+  unsub = onSnapshot(q,(snap)=>{
+    statuses = {};
+    snap.forEach(doc=>{ const data=doc.data(); statuses[data.date]=data.status; });
+    renderCalendar();
+  },(err)=>{
+    console.error(err);
+    renderCalendar();
   });
-  $('prevMonth').onclick=()=>{current.setMonth(current.getMonth()-1);renderAll();};
-  $('nextMonth').onclick=()=>{current.setMonth(current.getMonth()+1);renderAll();};
-  $('adminPrevMonth').onclick=()=>{adminCurrent.setMonth(adminCurrent.getMonth()-1);renderAll();};
-  $('adminNextMonth').onclick=()=>{adminCurrent.setMonth(adminCurrent.getMonth()+1);renderAll();};
-  document.querySelectorAll('.mode').forEach(btn=>btn.onclick=()=>{
-    document.querySelectorAll('.mode').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active'); adminMode=btn.dataset.mode;
-  });
-  $('loginBtn').onclick=()=>{
-    if($('adminPass').value==='1111'){
-      $('adminLock').classList.add('hidden'); $('adminBoard').classList.remove('hidden');
-    }else alert('รหัสไม่ถูกต้อง');
-  };
 }
 
-bindUI();
-renderAll();
-seedRooms().then(listenStatuses).catch(err=>{
-  console.error(err);
-  $('statusLine').textContent = 'เชื่อม Firebase ไม่สำเร็จ กรุณาตรวจสอบ Firestore Rules';
+$('prevMonth').onclick = ()=>{ current.setMonth(current.getMonth()-1); listenMonth(); };
+$('nextMonth').onclick = ()=>{ current.setMonth(current.getMonth()+1); listenMonth(); };
+$('adminBtn').onclick = ()=>{
+  const pass = prompt('ใส่รหัสแอดมิน');
+  if(pass==='1111'){
+    admin = true;
+    $('adminPanel').classList.remove('hidden');
+    $('customerPanel').scrollIntoView({behavior:'smooth'});
+    renderCalendar();
+  } else if(pass!==null) alert('รหัสไม่ถูกต้อง');
+};
+$('backCustomer').onclick = ()=>{ admin=false; $('adminPanel').classList.add('hidden'); renderCalendar(); };
+document.querySelectorAll('.mode[data-mode]').forEach(btn=>btn.onclick=()=>{
+  mode = btn.dataset.mode;
+  document.querySelectorAll('.mode[data-mode]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 });
+$('clearMonth').onclick = async()=>{
+  if(!confirm(`ปลดล็อก/ล้างสถานะทั้งหมดของ ${activeRoom} ในเดือนนี้ใช่ไหม?`)) return;
+  $('saveStatus').textContent = 'กำลังล้างข้อมูล...';
+  const start = `${monthKey()}-01`, end = `${monthKey()}-31`;
+  const q = query(collection(db,'availability'), where('room','==',activeRoom), where('date','>=',start), where('date','<=',end));
+  const snap = await getDocs(q);
+  await Promise.all(snap.docs.map(d=>deleteDoc(d.ref)));
+  $('saveStatus').textContent = 'ปลดล็อกทั้งเดือนแล้ว';
+  setTimeout(()=>$('saveStatus').textContent='พร้อมใช้งาน',1600);
+};
+
+renderRooms();
+listenMonth();
