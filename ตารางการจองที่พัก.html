@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mine Hills Pool Villa — ระบบจองที่พัก</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sarabun',sans-serif;background:#f7f5f0;color:#2c2c2a;min-height:100vh;}
+
+/* NAV */
+.top-nav{background:#fff;border-bottom:1px solid #e8e6e0;padding:0 1.5rem;display:flex;align-items:center;gap:0;}
+.nav-logo{font-size:17px;font-weight:600;color:#2c2c2a;padding:1rem 1.5rem 1rem 0;border-right:1px solid #e8e6e0;margin-right:1rem;}
+.nav-logo span{color:#1a7a5e;}
+.nav-tab{padding:1rem 1.25rem;font-size:14px;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Sarabun',sans-serif;}
+.nav-tab:hover{color:#2c2c2a;}
+.nav-tab.active{color:#1a7a5e;font-weight:600;border-bottom-color:#1a7a5e;}
+.admin-badge{font-size:10px;background:#fdf0eb;color:#c0693a;border-radius:4px;padding:2px 6px;margin-left:6px;font-weight:500;}
+
+.page{display:none;}
+.page.active{display:block;}
+
+/* SHARED LAYOUT */
+.container{max-width:960px;margin:2rem auto;padding:0 1rem;}
+.card{background:#fff;border-radius:16px;border:1px solid #e8e6e0;overflow:hidden;}
+.layout{display:grid;grid-template-columns:230px 1fr;min-height:520px;}
+.sidebar{border-right:1px solid #e8e6e0;padding:1.25rem 1rem;overflow-y:auto;background:#faf9f7;}
+.sidebar-title{font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;padding:0 4px;}
+.room-item{padding:9px 12px;border-radius:10px;cursor:pointer;border:1px solid transparent;margin-bottom:4px;transition:all 0.12s;background:none;width:100%;text-align:left;font-family:'Sarabun',sans-serif;}
+.room-item:hover{background:#f0f0ec;}
+.room-item.active{background:#e8f5f0;border-color:#a8d8c8;}
+.room-name{font-size:13px;color:#2c2c2a;line-height:1.3;}
+.room-item.active .room-name{color:#0f6e56;font-weight:500;}
+.room-badge{font-size:10px;color:#aaa;margin-top:2px;}
+.room-item.active .room-badge{color:#5dcaa5;}
+.content{display:flex;flex-direction:column;}
+.cal-header{padding:1rem 1.5rem 0.75rem;border-bottom:1px solid #e8e6e0;display:flex;align-items:center;gap:12px;}
+.cal-room-name{font-size:15px;font-weight:600;color:#2c2c2a;flex:1;}
+.month-nav{display:flex;align-items:center;gap:8px;}
+.nav-btn{background:none;border:1px solid #e0ddd8;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#666;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.1s;}
+.nav-btn:hover{background:#f0f0ec;}
+.month-label{font-size:13px;color:#555;min-width:120px;text-align:center;font-weight:500;}
+.cal-body{padding:1.25rem 1.5rem;flex:1;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.day-lbl{text-align:center;font-size:11px;color:#aaa;padding:4px 0 8px;font-weight:500;}
+.day-cell{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all 0.1s;position:relative;}
+.day-cell.empty,.day-cell.past{cursor:default;opacity:0.25;}
+.day-cell.today .dnum{color:#1a7a5e;font-weight:600;}
+.dnum{font-size:13px;color:#2c2c2a;}
+.ddot{width:5px;height:5px;border-radius:50%;margin-top:2px;}
+.legend{display:flex;gap:1.25rem;margin-top:1rem;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:6px;font-size:12px;color:#888;}
+.ldot{width:9px;height:9px;border-radius:50%;}
+.footer{text-align:center;margin-top:1.5rem;margin-bottom:2rem;font-size:12px;color:#bbb;}
+
+/* BOOKING PAGE */
+.day-cell.b-avail:hover{border-color:#a8d8c8;background:#e8f5f0;}
+.day-cell.b-booked{background:#fdf0eb;cursor:not-allowed;}
+.day-cell.b-booked .dnum{color:#c0693a;}
+.day-cell.b-closed{background:#f5f4f0;cursor:not-allowed;}
+.day-cell.b-closed .dnum{color:#ccc;}
+.day-cell.b-selected{background:#e8f5f0;border-color:#1a7a5e;}
+.day-cell.b-selected .dnum{color:#0f6e56;font-weight:600;}
+.day-cell.b-inrange{background:#f0faf6;}
+.day-cell.b-inrange .dnum{color:#1a7a5e;}
+.booking-bar{border-top:1px solid #e8e6e0;padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;background:#faf9f7;}
+.bdate{font-size:13px;color:#666;flex:1;min-width:200px;}
+.bdate strong{color:#2c2c2a;}
+.bnights{font-size:13px;color:#aaa;}
+.book-btn{padding:9px 20px;background:#1a7a5e;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif;transition:background 0.15s;}
+.book-btn:hover{background:#0f6e56;}
+.book-btn:disabled{background:#ccc;cursor:not-allowed;}
+
+/* ADMIN PAGE */
+.day-cell.a-avail:hover{border-color:#a8d8c8;background:#e8f5f0;}
+.day-cell.a-booked{background:#fdf0eb;cursor:not-allowed;}
+.day-cell.a-booked .dnum{color:#c0693a;}
+.day-cell.a-closed{background:#f5f4f0;}
+.day-cell.a-closed .dnum{color:#888;}
+.action-bar{border-top:1px solid #e8e6e0;padding:0.75rem 1.5rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#faf9f7;}
+.hint{font-size:12px;color:#aaa;flex:1;min-width:120px;}
+.mode-btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #e0ddd8;background:none;color:#666;font-family:'Sarabun',sans-serif;transition:all 0.1s;}
+.mode-btn:hover{background:#f0f0ec;}
+.mode-btn.m-avail{background:#e8f5f0;border-color:#a8d8c8;color:#0f6e56;font-weight:500;}
+.mode-btn.m-closed{background:#f5f4f0;border-color:#d0cdc7;color:#555;font-weight:500;}
+.mode-btn.m-booked{background:#fdf0eb;border-color:#f5c4b3;color:#c0693a;font-weight:500;}
+.mode-btn.m-clear{background:#eef7ff;border-color:#b8d8f0;color:#2d6f9f;font-weight:500;}
+.save-btn{margin-left:auto;padding:8px 20px;background:#1a7a5e;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Sarabun',sans-serif;}
+.save-btn:hover{background:#0f6e56;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;z-index:999;padding:1rem;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:16px;padding:1.75rem;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+.modal h3{font-size:16px;font-weight:600;color:#2c2c2a;margin-bottom:1rem;}
+.modal-info{font-size:13px;color:#555;background:#f7f5f0;border-radius:10px;padding:12px 14px;margin-bottom:1.25rem;line-height:2;}
+.fg{margin-bottom:12px;}
+.fl{font-size:12px;color:#888;margin-bottom:4px;display:block;}
+.fi{width:100%;padding:9px 12px;border:1px solid #e0ddd8;border-radius:10px;background:#faf9f7;color:#2c2c2a;font-size:13px;font-family:'Sarabun',sans-serif;}
+.fi:focus{outline:none;border-color:#1a7a5e;}
+.mactions{display:flex;gap:10px;margin-top:1rem;}
+.mbtn{flex:1;padding:10px;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Sarabun',sans-serif;font-weight:500;}
+.mbtn.cancel{background:none;border:1px solid #e0ddd8;color:#666;}
+.mbtn.confirm{background:#1a7a5e;color:#fff;border:none;}
+.success{text-align:center;padding:0.5rem 0;display:none;}
+.sicon{font-size:48px;}
+.stxt{font-size:16px;font-weight:600;color:#2c2c2a;margin-top:8px;}
+.ssub{font-size:13px;color:#888;margin-top:6px;line-height:1.8;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1a7a5e;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;}
+
+@media(max-width:640px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{border-right:none;border-bottom:1px solid #e8e6e0;max-height:180px;}
+  .container{margin:1rem auto;}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-logo">🏔️ <span>Mine Hills</span> Pool Villa</div>
+  <button class="nav-tab active" onclick="showPage('booking',this)">จองที่พัก</button>
+  <button class="nav-tab" onclick="showPage('admin',this)">จัดการ <span class="admin-badge">แอดมิน</span></button>
+</nav>
+
+<!-- ===== BOOKING PAGE ===== -->
+<div id="page-booking" class="page active">
+  <div class="container">
+    <div class="card">
+      <div class="layout">
+        <div class="sidebar">
+          <div class="sidebar-title">ที่พักทั้งหมด</div>
+          <div id="b-room-list"></div>
+        </div>
+        <div class="content">
+          <div class="cal-header">
+            <div class="cal-room-name" id="b-room-name">—</div>
+            <div class="month-nav">
+              <button class="nav-btn" onclick="bChangeMonth(-1)">‹</button>
+              <div class="month-label" id="b-month-label"></div>
+              <button class="nav-btn" onclick="bChangeMonth(1)">›</button>
+            </div>
+          </div>
+          <div class="cal-body">
+            <div class="cal-grid" id="b-cal-grid"></div>
+            <div class="legend">
+              <div class="leg"><div class="ldot" style="background:#1D9E75"></div>ว่าง</div>
+              <div class="leg"><div class="ldot" style="background:#D85A30"></div>ไม่ว่าง</div>
+              <div class="leg"><div class="ldot" style="background:#ccc"></div>ล็อกไม่ว่าง</div>
+              <div class="leg"><div class="ldot" style="background:#1a7a5e"></div>เลือกแล้ว</div>
+            </div>
+          </div>
+          <div class="booking-bar">
+            <div class="bdate" id="b-date-info">เลือกวันเช็คอิน จากนั้นเลือกวันเช็คเอาท์</div>
+            <div class="bnights" id="b-nights"></div>
+            <button class="book-btn" id="b-book-btn" disabled onclick="openModal()">📅 จองเลย</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">Mine Hills Pool Villa · ระบบจองออนไลน์</div>
+  </div>
+</div>
+
+<!-- ===== ADMIN PAGE ===== -->
+<div id="page-admin" class="page">
+  <div class="container">
+    <div class="card">
+      <div class="layout">
+        <div class="sidebar">
+          <div class="sidebar-title">ที่พัก</div>
+          <div id="a-room-list"></div>
+        </div>
+        <div class="content">
+          <div class="cal-header">
+            <div class="cal-room-name" id="a-room-name">—</div>
+            <div class="month-nav">
+              <button class="nav-btn" onclick="aChangeMonth(-1)">‹</button>
+              <div class="month-label" id="a-month-label"></div>
+              <button class="nav-btn" onclick="aChangeMonth(1)">›</button>
+            </div>
+          </div>
+          <div class="cal-body">
+            <div class="cal-grid" id="a-cal-grid"></div>
+            <div class="legend">
+              <div class="leg"><div class="ldot" style="background:#1D9E75"></div>ว่าง</div>
+              <div class="leg"><div class="ldot" style="background:#D85A30"></div>จองแล้ว</div>
+              <div class="leg"><div class="ldot" style="background:#B4B2A9"></div>ล็อกไม่ว่าง</div>
+            </div>
+          </div>
+          <div class="action-bar">
+            <div class="hint">เลือกโหมด → คลิกวันที่ต้องการล็อก/ปลดล็อก</div>
+            <button class="mode-btn m-avail" id="a-btn-avail" onclick="aSetMode('avail')">✅ ตั้งเป็นว่าง</button>
+            <button class="mode-btn" id="a-btn-closed" onclick="aSetMode('closed')">🔒 ล็อกไม่ว่าง</button>
+            <button class="mode-btn" id="a-btn-booked" onclick="aSetMode('booked')">📌 มีการจองแล้ว</button>
+            <button class="mode-btn" id="a-btn-clear" onclick="aSetMode('clear')">🔓 ปลดล็อกเป็นว่าง</button>
+            <button class="mode-btn" onclick="aUnlockMonth()">🔓 ปลดล็อกทั้งเดือน</button>
+            <button class="save-btn" onclick="aSave()">💾 บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">Mine Hills Pool Villa · หน้าจัดการแอดมิน</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div id="modal-form">
+      <h3>ข้อมูลผู้จอง</h3>
+      <div class="modal-info" id="modal-info"></div>
+      <div class="fg"><label class="fl">ชื่อ-นามสกุล</label><input class="fi" id="g-name" placeholder="เช่น สมชาย ใจดี"></div>
+      <div class="fg"><label class="fl">เบอร์โทรศัพท์</label><input class="fi" id="g-tel" type="tel" placeholder="0812345678"></div>
+      <div class="fg"><label class="fl">หมายเหตุ (ถ้ามี)</label><input class="fi" id="g-note" placeholder="ต้องการอะไรเพิ่มเติม"></div>
+      <div class="mactions">
+        <button class="mbtn cancel" onclick="closeModal()">ยกเลิก</button>
+        <button class="mbtn confirm" onclick="confirmBook()">ยืนยันการจอง</button>
+      </div>
+    </div>
+    <div class="success" id="modal-success">
+      <div class="sicon">✅</div>
+      <div class="stxt">จองสำเร็จ!</div>
+      <div class="ssub" id="success-detail"></div>
+      <button class="mbtn confirm" style="margin-top:16px;width:100%" onclick="closeModal()">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">💾 บันทึกสำเร็จแล้ว!</div>
+
+<script>
+const MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DAYS=['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+const rooms=[
+  {name:'บ้านพูลวิลล่า',type:'วิลล่า'},
+  {name:'บ้าน Jacuzzi',type:'วิลล่า'},
+  {name:'รถบ้านครีม โซน1 คันที่1',type:'รถบ้าน'},
+  {name:'รถบ้านครีม โซน1 คันที่2',type:'รถบ้าน'},
+  {name:'บ้าน View Hills หลังที่ 1',type:'วิลล่า'},
+  {name:'บ้าน View Hills หลังที่ 2',type:'วิลล่า'},
+  {name:'บ้านมูจิ',type:'บ้านพัก'},
+  {name:'บ้านไวท์เฮ้าส์',type:'บ้านพัก'},
+  {name:'รถบ้านมิ้น คันที่ 1',type:'รถบ้าน'},
+  {name:'รถบ้านมิ้น คันที่ 2',type:'รถบ้าน'},
+  {name:'รถบ้านเทา คันที่ 3',type:'รถบ้าน'},
+  {name:'รถบ้านเทา คันที่ 4',type:'รถบ้าน'},
+  {name:'บ้านโคซี่',type:'บ้านพัก'},
+];
+
+const today=new Date();
+
+// ===== SHARED STATE =====
+// availability[roomIdx]["YYYY-MM-DD"] = "avail"|"closed"|"booked"
+const availability={};
+rooms.forEach((_,i)=>{availability[i]={};});
+
+// ทุกวันเริ่มต้นเป็น "ว่าง" ทั้งหมด
+// ระบบจะบันทึกวันที่ล็อก/จองไว้ในเครื่องด้วย localStorage
+const STORAGE_KEY='minehills_availability_v2';
+
+function loadAvailability(){
+  const saved=localStorage.getItem(STORAGE_KEY);
+  if(!saved) return;
+  try{
+    const data=JSON.parse(saved);
+    rooms.forEach((_,i)=>{ availability[i]=data[i]||{}; });
+  }catch(e){
+    console.warn('โหลดข้อมูลเก่าไม่ได้',e);
+  }
+}
+function saveAvailability(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(availability));
+}
+loadAvailability();
+
+function dateKey(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function fmtDate(d){if(!d)return'—';return d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3)+' '+(d.getFullYear()+543);}
+function isPast(date){return new Date(date.getFullYear(),date.getMonth(),date.getDate())<new Date(today.getFullYear(),today.getMonth(),today.getDate());}
+
+// ===== PAGE SWITCH =====
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== BOOKING =====
+let bRoom=0,bYear=today.getFullYear(),bMonth=today.getMonth(),checkIn=null,checkOut=null,bStep=0;
+
+function bRenderRooms(){
+  const list=document.getElementById('b-room-list');
+  list.innerHTML='';
+  rooms.forEach((r,i)=>{
+    const el=document.createElement('button');
+    el.className='room-item'+(i===bRoom?' active':'');
+    el.innerHTML='<div class="room-name">'+r.name+'</div><div class="room-badge">'+r.type+'</div>';
+    el.onclick=()=>{bRoom=i;checkIn=null;checkOut=null;bStep=0;bRenderRooms();bRenderCal();bUpdateBar();};
+    list.appendChild(el);
+  });
+}
+
+function bRenderCal(){
+  document.getElementById('b-room-name').textContent=rooms[bRoom].name;
+  document.getElementById('b-month-label').textContent=MONTHS[bMonth]+' '+(bYear+543);
+  const grid=document.getElementById('b-cal-grid');
+  grid.innerHTML='';
+  DAYS.forEach(d=>{const e=document.createElement('div');e.className='day-lbl';e.textContent=d;grid.appendChild(e);});
+  const first=new Date(bYear,bMonth,1).getDay();
+  const total=new Date(bYear,bMonth+1,0).getDate();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
+  for(let d=1;d<=total;d++){
+    const date=new Date(bYear,bMonth,d);
+    const key=dateKey(bYear,bMonth,d);
+    const st=availability[bRoom][key]||'avail';
+    const el=document.createElement('div');el.className='day-cell';
+    const dn=document.createElement('div');dn.className='dnum';dn.textContent=d;el.appendChild(dn);
+    if(isPast(date)){el.classList.add('past');}
+    else if(st==='booked'){el.classList.add('b-booked');const dot=document.createElement('div');dot.className='ddot';dot.style.background='#D85A30';el.appendChild(dot);}
+    else if(st==='closed'){el.classList.add('b-closed');const dot=document.createElement('div');dot.className='ddot';dot.style.background='#ccc';el.appendChild(dot);}
+    else{
+      el.classList.add('b-avail');
+      const dot=document.createElement('div');dot.className='ddot';dot.style.background='#1D9E75';el.appendChild(dot);
+      if(checkIn&&date.toDateString()===checkIn.toDateString())el.classList.add('b-selected');
+      if(checkOut&&date.toDateString()===checkOut.toDateString())el.classList.add('b-selected');
+      if(checkIn&&checkOut&&date>checkIn&&date<checkOut)el.classList.add('b-inrange');
+      el.onclick=()=>bPick(date);
+    }
+    if(date.toDateString()===today.toDateString())el.classList.add('today');
+    grid.appendChild(el);
+  }
+}
+
+function bPick(date){
+  if(bStep===0||(checkIn&&date<=checkIn)){checkIn=date;checkOut=null;bStep=1;}
+  else{checkOut=date;bStep=0;}
+  bUpdateBar();bRenderCal();
+}
+
+function bUpdateBar(){
+  const info=document.getElementById('b-date-info');
+  const nights=document.getElementById('b-nights');
+  const btn=document.getElementById('b-book-btn');
+  if(!checkIn){info.innerHTML='เลือกวันเช็คอิน จากนั้นเลือกวันเช็คเอาท์';nights.textContent='';btn.disabled=true;return;}
+  if(!checkOut){info.innerHTML='<strong>เช็คอิน:</strong> '+fmtDate(checkIn)+' → เลือกวันเช็คเอาท์';nights.textContent='';btn.disabled=true;return;}
+  const n=Math.round((checkOut-checkIn)/86400000);
+  info.innerHTML='<strong>'+fmtDate(checkIn)+'</strong> → <strong>'+fmtDate(checkOut)+'</strong>';
+  nights.textContent=n+' คืน';
+  btn.disabled=false;
+}
+
+function bChangeMonth(d){
+  bMonth+=d;
+  if(bMonth>11){bMonth=0;bYear++;}
+  if(bMonth<0){bMonth=11;bYear--;}
+  bRenderCal();
+}
+
+// ===== ADMIN =====
+let aRoom=0,aYear=today.getFullYear(),aMonth=today.getMonth(),aMode='avail';
+
+function aRenderRooms(){
+  const list=document.getElementById('a-room-list');
+  list.innerHTML='';
+  rooms.forEach((r,i)=>{
+    const el=document.createElement('button');
+    el.className='room-item'+(i===aRoom?' active':'');
+    el.innerHTML='<div class="room-name">'+r.name+'</div><div class="room-badge">'+r.type+'</div>';
+    el.onclick=()=>{aRoom=i;aRenderRooms();aRenderCal();};
+    list.appendChild(el);
+  });
+}
+
+function aRenderCal(){
+  document.getElementById('a-room-name').textContent=rooms[aRoom].name;
+  document.getElementById('a-month-label').textContent=MONTHS[aMonth]+' '+(aYear+543);
+  const grid=document.getElementById('a-cal-grid');
+  grid.innerHTML='';
+  DAYS.forEach(d=>{const e=document.createElement('div');e.className='day-lbl';e.textContent=d;grid.appendChild(e);});
+  const first=new Date(aYear,aMonth,1).getDay();
+  const total=new Date(aYear,aMonth+1,0).getDate();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='day-cell empty';grid.appendChild(e);}
+  for(let d=1;d<=total;d++){
+    const date=new Date(aYear,aMonth,d);
+    const key=dateKey(aYear,aMonth,d);
+    const st=availability[aRoom][key]||'avail';
+    const el=document.createElement('div');el.className='day-cell';
+    const dn=document.createElement('div');dn.className='dnum';dn.textContent=d;el.appendChild(dn);
+    const dot=document.createElement('div');dot.className='ddot';
+    if(isPast(date)){el.classList.add('past');}
+    else if(st==='booked'){el.classList.add('a-booked');dot.style.background='#D85A30';el.appendChild(dot);}
+    else if(st==='closed'){el.classList.add('a-closed');dot.style.background='#B4B2A9';el.appendChild(dot);}
+    else{el.classList.add('a-avail');dot.style.background='#1D9E75';el.appendChild(dot);}
+    if(date.toDateString()===today.toDateString())el.classList.add('today');
+    if(!isPast(date)){
+      el.onclick=()=>{
+        const k=dateKey(aYear,aMonth,d);
+        if(aMode==='clear'||aMode==='avail'){delete availability[aRoom][k];}
+        else{availability[aRoom][k]=aMode;}
+        saveAvailability();
+        aRenderCal();
+        bRenderCal();
+      };
+    }
+    grid.appendChild(el);
+  }
+}
+
+function aSetMode(m){
+  aMode=m;
+  ['avail','closed','booked','clear'].forEach(x=>{
+    const b=document.getElementById('a-btn-'+x);
+    b.className='mode-btn'+(m===x?' m-'+x:'');
+  });
+}
+
+function aChangeMonth(d){
+  aMonth+=d;
+  if(aMonth>11){aMonth=0;aYear++;}
+  if(aMonth<0){aMonth=11;aYear--;}
+  aRenderCal();
+}
+
+function aUnlockMonth(){
+  if(!confirm('ปลดล็อกวันไม่ว่าง/มีการจองแล้วทั้งหมดของ '+rooms[aRoom].name+' ในเดือนนี้ใช่ไหม?')) return;
+  const total=new Date(aYear,aMonth+1,0).getDate();
+  for(let d=1;d<=total;d++){
+    const k=dateKey(aYear,aMonth,d);
+    if(availability[aRoom][k]==='closed'||availability[aRoom][k]==='booked') delete availability[aRoom][k];
+  }
+  saveAvailability();
+  aRenderCal();
+  bRenderCal();
+  const t=document.getElementById('toast');
+  t.textContent='🔓 ปลดล็อกวันไม่ว่าง/จองแล้วทั้งเดือนแล้ว';
+  t.classList.add('show');
+  setTimeout(()=>{t.classList.remove('show');t.textContent='💾 บันทึกสำเร็จแล้ว!';},2500);
+}
+
+function aSave(){
+  saveAvailability();
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ===== MODAL =====
+function openModal(){
+  const n=Math.round((checkOut-checkIn)/86400000);
+  document.getElementById('modal-info').innerHTML='🏠 '+rooms[bRoom].name+'<br>📅 '+fmtDate(checkIn)+' – '+fmtDate(checkOut)+'<br>🌙 '+n+' คืน';
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+  document.getElementById('modal-form').style.display='block';
+  document.getElementById('modal-success').style.display='none';
+  document.getElementById('g-name').value='';
+  document.getElementById('g-tel').value='';
+  document.getElementById('g-note').value='';
+}
+function confirmBook(){
+  const name=document.getElementById('g-name').value.trim();
+  const tel=document.getElementById('g-tel').value.trim();
+  if(!name||!tel){alert('กรุณากรอกชื่อและเบอร์โทรศัพท์');return;}
+  const n=Math.round((checkOut-checkIn)/86400000);
+  // mark as booked
+  for(let i=0;i<n;i++){
+    const d=new Date(checkIn);d.setDate(d.getDate()+i);
+    const k=d.toISOString().slice(0,10);
+    availability[bRoom][k]='booked';
+  }
+  saveAvailability();
+  aRenderCal();
+  document.getElementById('success-detail').innerHTML=rooms[bRoom].name+'<br>'+fmtDate(checkIn)+' – '+fmtDate(checkOut)+' · '+n+' คืน<br>ผู้จอง: '+name+'<br>โทร: '+tel;
+  document.getElementById('modal-form').style.display='none';
+  document.getElementById('modal-success').style.display='block';
+  checkIn=null;checkOut=null;bStep=0;
+  bRenderCal();bUpdateBar();
+}
+
+// INIT
+bRenderRooms();bRenderCal();bUpdateBar();
+aRenderRooms();aRenderCal();aSetMode('avail');
+</script>
+</body>
+</html>
