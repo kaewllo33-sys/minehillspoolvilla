@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Mine Hills Pool Villa</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="hero admin-hero">
+    <div>
+      <p class="eyebrow">Admin Mine Hills</p>
+      <h1>จัดการวันว่าง / ไม่ว่าง</h1>
+      <p class="sub">เลือกบ้าน เลือกสถานะ แล้วคลิกวันที่ต้องการ</p>
+    </div>
+    <a class="admin-link" href="index.html">ดูหน้าลูกค้า</a>
+  </header>
+
+  <main class="wrap">
+    <section id="loginBox" class="panel login-box">
+      <h2>เข้าสู่ระบบแอดมิน</h2>
+      <p>ใส่รหัสผ่านเพื่อจัดการปฏิทิน</p>
+      <input id="password" type="password" placeholder="รหัสผ่าน" />
+      <button id="loginBtn" class="primary">เข้าสู่ระบบ</button>
+      <p id="loginMsg" class="muted"></p>
+    </section>
+
+    <section id="adminApp" class="hidden">
+      <section class="panel">
+        <div class="section-head">
+          <div>
+            <h2>เลือกบ้านพัก</h2>
+            <p>เลือกบ้านที่ต้องการแก้สถานะ</p>
+          </div>
+        </div>
+        <div id="roomList" class="room-list"></div>
+      </section>
+
+      <section class="panel calendar-panel">
+        <div class="calendar-top">
+          <button id="prevMonth" class="round">‹</button>
+          <div>
+            <h2 id="activeRoomName">—</h2>
+            <p id="monthLabel">—</p>
+          </div>
+          <button id="nextMonth" class="round">›</button>
+        </div>
+
+        <div class="admin-tools">
+          <button class="mode active" data-mode="free">✅ ว่าง</button>
+          <button class="mode" data-mode="booked">🔴 จองแล้ว / ไม่ว่าง</button>
+          <button class="mode" data-mode="locked">⚫ ปิด / ล็อก</button>
+          <button id="clearMonth" class="mode danger">ล้างทั้งเดือน</button>
+        </div>
+        <p id="saveStatus" class="muted">พร้อมใช้งาน</p>
+
+        <div class="legend">
+          <span><i class="dot free"></i>ว่าง</span>
+          <span><i class="dot booked"></i>ไม่ว่าง / จองแล้ว</span>
+          <span><i class="dot locked"></i>ปิด / ล็อก</span>
+        </div>
+
+        <div id="calendar" class="calendar admin-calendar"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>Mine Hills Pool Villa · Admin</footer>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

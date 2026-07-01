@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mine Hills Pool Villa | ตารางบ้านว่าง</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Mine Hills Pool Villa</p>
+      <h1>ตารางบ้านว่าง / ไม่ว่าง</h1>
+      <p class="sub">ลูกค้าสามารถเลือกบ้านและดูวันที่ว่างได้เอง</p>
+    </div>
+    <a class="admin-link" href="admin.html">สำหรับแอดมิน</a>
+  </header>
+
+  <main class="wrap">
+    <section class="panel">
+      <div class="section-head">
+        <div>
+          <h2>เลือกบ้านพัก</h2>
+          <p>บ้านพักทั้งหมด 13 หลัง/คัน</p>
+        </div>
+      </div>
+      <div id="roomList" class="room-list"></div>
+    </section>
+
+    <section class="panel calendar-panel">
+      <div class="calendar-top">
+        <button id="prevMonth" class="round">‹</button>
+        <div>
+          <h2 id="activeRoomName">—</h2>
+          <p id="monthLabel">—</p>
+        </div>
+        <button id="nextMonth" class="round">›</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot free"></i>ว่าง</span>
+        <span><i class="dot booked"></i>ไม่ว่าง / จองแล้ว</span>
+        <span><i class="dot locked"></i>ปิด / ล็อก</span>
+      </div>
+
+      <div id="calendar" class="calendar"></div>
+    </section>
+  </main>
+
+  <footer>Mine Hills Pool Villa · Pak Chong Khao Yai</footer>
+  <script type="module" src="js/customer.js"></script>
+</body>
+</html>
